@@ -17,7 +17,7 @@ def proc_frames(src_path, dst_path):
     cmd = 'ffmpeg -i \"{}\" -start_number 0 -qscale:v 2 \"{}\"/%06d.jpg -loglevel error -y'.format(src_path, dst_path)
     os.system(cmd)
     frames = glob.glob(os.path.join(dst_path, '*.jpg'))
-    return len(frames)
+    return len(frames)                               ## 视频转成图片的张数                   
 
 
 def proc_audio(src_mouth_path, dst_audio_path):
@@ -49,31 +49,31 @@ if __name__ == "__main__":
     mkdir(dir_path)
 
     # ===================== process input =======================================================
-    input_save_path = os.path.join(dir_path, 'Input')
+    input_save_path = os.path.join(dir_path, 'Input')               ## ./misc/Input
     mkdir(input_save_path)
-    input_name = args.src_input_path.split('/')[-1].split('.')[0]
+    input_name = args.src_input_path.split('/')[-1].split('.')[0]    ## src_input_path == ./misc/Input/00098.mp4
     num_inputs = 1
-    dst_input_path = os.path.join(input_save_path, input_name)
+    dst_input_path = os.path.join(input_save_path, input_name)     ## ./misc/Input/00098
     mkdir(dst_input_path)
     if args.src_input_path.split('/')[-1].split('.')[-1] == 'mp4':
-        num_inputs = proc_frames(args.src_input_path, dst_input_path)
-    elif os.path.isdir(args.src_input_path):
-        dst_input_path = args.src_input_path
+        num_inputs = proc_frames(args.src_input_path, dst_input_path)     ##如果输入的是视频，就解为图片
+    elif os.path.isdir(args.src_input_path):                                 
+        dst_input_path = args.src_input_path                              ## 如果输入是个文件夹，就直接保留
     else:
         os.system('cp {} {}'.format(args.src_input_path, os.path.join(dst_input_path, args.src_input_path.split('/')[-1])))
 
 
     # ===================== process audio =======================================================
-    audio_source_save_path = os.path.join(dir_path, 'Audio_Source')
+    audio_source_save_path = os.path.join(dir_path, 'Audio_Source')      ## ./misc/Audio_Source
     mkdir(audio_source_save_path)
     audio_name = args.src_audio_path.split('/')[-1].split('.')[0]
     spec_dir = 'None'
-    dst_audio_path = os.path.join(audio_source_save_path, audio_name + '.mp3')
+    dst_audio_path = os.path.join(audio_source_save_path, audio_name + '.mp3')    ## ./misc/Audio_Source/00015.mp3
 
     if args.src_audio_path.split('/')[-1].split('.')[-1] == 'mp3':
-        os.system('cp {} {}'.format(args.src_audio_path, dst_audio_path))
+        os.system('cp {} {}'.format(args.src_audio_path, dst_audio_path))    ## 如果本身source就是个mp3格式，那就不改，直接复制cp
         if args.src_mouth_frame_path and os.path.isdir(args.src_mouth_frame_path):
-            dst_mouth_frame_path = args.src_mouth_frame_path
+            dst_mouth_frame_path = args.src_mouth_frame_path        ## 如果本身audio source就是mp3，说明mp4已经解了，且嘴帧路径是个目录，直接赋值即可。如果不是目录，说明没有嘴帧
             num_mouth_frames = len(glob.glob(os.path.join(args.src_mouth_frame_path, '*.jpg')) + glob.glob(os.path.join(args.src_mouth_frame_path, '*.png')))
         else:
             dst_mouth_frame_path = 'None'
@@ -83,8 +83,8 @@ if __name__ == "__main__":
         mkdir(mouth_source_save_path)
         dst_mouth_frame_path = os.path.join(mouth_source_save_path, audio_name)
         mkdir(dst_mouth_frame_path)
-        proc_audio(args.src_audio_path, dst_audio_path)
-        num_mouth_frames = proc_frames(args.src_audio_path, dst_mouth_frame_path)
+        proc_audio(args.src_audio_path, dst_audio_path)            ## mp4格式要转换为mp3
+        num_mouth_frames = proc_frames(args.src_audio_path, dst_mouth_frame_path)    ## 嘴帧图片自己解
 
     if args.convert_spectrogram:
         audio = AudioConfig(fft_size=1280, hop_size=160)
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     with open(args.csv_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=' ', quoting=csv.QUOTE_MINIMAL)
-        writer.writerows([[dst_input_path, str(num_inputs), dst_pose_frame_path, str(num_pose_frames),
+        writer.writerows([[dst_input_path, str(num_inputs), dst_pose_frame_path, str(num_pose_frames),      ## 将上述处理完的信息的路径，数量等值保存到csv文件中
                            dst_audio_path, dst_mouth_frame_path, str(num_mouth_frames), spec_dir]])
         print('meta-info saved at ' + args.csv_path)
 
