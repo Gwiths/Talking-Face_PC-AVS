@@ -73,12 +73,12 @@ class VOXTestDataset(BaseDataset):
 
 
         assert len(opt.path_label.split()) == 8, opt.path_label
-        id_path, ref_num, \
+        id_path, ref_num, \                                                         
         pose_frame_path, pose_num_frames, \
-        audio_path, mouth_frame_path, mouth_num_frames, spectrogram_path = opt.path_label.split()
+        audio_path, mouth_frame_path, mouth_num_frames, spectrogram_path = opt.path_label.split()    ## 从这里看出opt.path_label其实就是demo.csv中的所有路径数据
 
 
-        id_idx, mouth_idx = id_path.split('/')[-1], audio_path.split('/')[-1].split('.')[0]
+        id_idx, mouth_idx = id_path.split('/')[-1], audio_path.split('/')[-1].split('.')[0]   ## id_idx  mouth_idx   pose_idx  都是数据处理后文件/文件夹的名称
         if not os.path.isdir(pose_frame_path):
             pose_frame_path = id_path
             pose_num_frames = 1
@@ -91,7 +91,7 @@ class VOXTestDataset(BaseDataset):
         if not os.path.exists(self.processed_file_savepath): os.makedirs(self.processed_file_savepath)
 
 
-        if not os.path.isfile(spectrogram_path):
+        if not os.path.isfile(spectrogram_path):                     ## 默认是 None，所以需要打开audio，生成spectrogram
             wav = self.audio.read_audio(audio_path)
             self.spectrogram = self.audio.audio_to_spectrogram(wav)
 
@@ -110,20 +110,20 @@ class VOXTestDataset(BaseDataset):
         self.dataset_size = len(self.target_frame_inds)
 
         id_img_paths = glob.glob(os.path.join(id_path, '*.jpg')) + glob.glob(os.path.join(id_path, '*.png'))
-        random.shuffle(id_img_paths)
+        random.shuffle(id_img_paths)                                           ## 打乱
         opt.num_inputs = min(len(id_img_paths), opt.num_inputs)
         id_img_tensors = []
 
-        for i, image_path in enumerate(id_img_paths):
+        for i, image_path in enumerate(id_img_paths):                 ## id_img_paths这个list存的是打乱了的identity图片，来自input_path
             id_img_tensor = self.to_Tensor(self.load_img(image_path))
-            id_img_tensors += [id_img_tensor]
-            shutil.copyfile(image_path, os.path.join(self.processed_file_savepath, 'ref_id_{}.jpg'.format(i)))
+            id_img_tensors += [id_img_tensor]  
+            shutil.copyfile(image_path, os.path.join(self.processed_file_savepath, 'ref_id_{}.jpg'.format(i)))  ## 将打乱后的id图片复制到self.processed_file_savepath，并从头顺序命名
             if i == (opt.num_inputs - 1):
                 break
         self.id_img_tensor = torch.stack(id_img_tensors)
         self.pose_frame_path = pose_frame_path
         self.audio_path = audio_path
-        self.id_path = id_path
+        self.id_path = id_path                    ## id_path还是原来的为打乱的路径
         self.mouth_frame_path = mouth_frame_path
         self.initialized = False
 
