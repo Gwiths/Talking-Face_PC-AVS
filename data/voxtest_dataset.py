@@ -87,7 +87,7 @@ class VOXTestDataset(BaseDataset):
         id_idx, pose_idx, mouth_idx = str(id_idx), str(pose_idx), str(mouth_idx)
 
         self.processed_file_savepath = os.path.join('results', 'id_' + id_idx + '_pose_' + pose_idx +
-                                   '_audio_' + os.path.basename(audio_path)[:-4])
+                                   '_audio_' + os.path.basename(audio_path)[:-4])                          ## processed_file_savepath == results/id_xxx_pose_xxx_audio_xxx
         if not os.path.exists(self.processed_file_savepath): os.makedirs(self.processed_file_savepath)
 
 
