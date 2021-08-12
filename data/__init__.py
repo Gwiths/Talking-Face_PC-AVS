@@ -8,7 +8,7 @@ def find_dataset_using_name(dataset_name):
     # the file "datasets/datasetname_dataset.py"
     # will be imported. 
     dataset_filename = "data." + dataset_name + "_dataset"
-    datasetlib = importlib.import_module(dataset_filename)
+    datasetlib = importlib.import_module(dataset_filename)       ## from data import voxtest_dataset
 
     # In the file, the class called DatasetNameDataset() will
     # be instantiated. It has to be a subclass of BaseDataset,
@@ -34,9 +34,9 @@ def get_option_setter(dataset_name):
 
 
 def create_dataloader(opt):
-    dataset_modes = opt.dataset_mode.split(',')
+    dataset_modes = opt.dataset_mode.split(',')       ## opt.dataset_mode == voxtest
     if len(dataset_modes) == 1:
-        dataset = find_dataset_using_name(opt.dataset_mode)
+        dataset = find_dataset_using_name(opt.dataset_mode)   ## 根据opt选项中的名字，找到dataset对象
         instance = dataset()
         instance.initialize(opt)
         print("dataset [%s] of size %d was created" %
@@ -54,7 +54,7 @@ def create_dataloader(opt):
         )
         return dataloader
 
-    else:
+    else:                                 ## 当opt.dataset_mode写法为xxx,xxxx,xxx时，即有多个数据集，则创建多个dataloader
         dataloader_dict = {}
         for dataset_mode in dataset_modes:
             dataset = find_dataset_using_name(dataset_mode)
