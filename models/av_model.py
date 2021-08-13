@@ -65,7 +65,7 @@ class AvModel(torch.nn.Module):
 
     def forward(self, data, mode):
         labels = data['label']
-        input_image, target_images, augmentated, spectrogram = self.preprocessing(data)
+        input_image, target_images, augmentated, spectrogram = self.preprocessing(data)    ## preprocessing函数紧挨着在上面。将data数据（prepared后的数据片）取出来
         if mode == 'generator':
             g_loss, generated, id_scores = self.compute_generator_loss(
                 input_image, target_images, augmentated, spectrogram,
@@ -90,7 +90,7 @@ class AvModel(torch.nn.Module):
             assert self.opt.use_audio, 'must use audio driven strategy.'
             driving_pose_frames = data['driving_pose_frames'].cuda()
             with torch.no_grad():
-                fake_image_ref_pose_a, fake_image_driven_pose_a = self.inference(input_image, spectrogram,
+                fake_image_ref_pose_a, fake_image_driven_pose_a = self.inference(input_image, spectrogram,    ## inference函数在463行
                                                                                     driving_pose_frames)
             return fake_image_ref_pose_a, fake_image_driven_pose_a
         else:
@@ -253,7 +253,7 @@ class AvModel(torch.nn.Module):
         netA = None
         netA_sync = None
         if opt.train_recognition:
-            netV = networks.define_V(opt)
+            netV = networks.define_V(opt)            ## models/networks/__init__.py
         elif opt.train_sync:
             netA_sync = networks.define_A_sync(opt) if opt.use_audio else None
             netE = networks.define_E(opt)
@@ -268,7 +268,7 @@ class AvModel(torch.nn.Module):
             if opt.isTrain:
                 netD = networks.define_D(opt)
 
-        if not opt.isTrain or opt.continue_train:
+        if not opt.isTrain or opt.continue_train:                 ## 如果opt中是说要test或者继续训练，则导入一训练好的权值，用load_network
             self.load_network(netG, 'G', opt.which_epoch)
             self.load_network(netV, 'V', opt.which_epoch)
             self.load_network(netE, 'E', opt.which_epoch)
@@ -281,7 +281,7 @@ class AvModel(torch.nn.Module):
                 self.load_network(netD, 'D', opt.which_epoch)
                 # self.load_network(netD_rotate, 'D_rotate', opt.which_epoch, pretrained_path)
 
-        else:
+        else:                                                    ## 否则，说明是要来训练。则需要导入pretrain的checkpoints，所以用load_pretrain()
             if self.opt.pretrain:
                 if opt.netE == 'fan':
                     netE.load_pretrain()
@@ -294,7 +294,7 @@ class AvModel(torch.nn.Module):
                 netE = self.load_separately(netE, 'E', opt)
                 if not opt.noload_D:
                     netD = self.load_separately(netD, 'D', opt)
-        return netG, netD, netA, netA_sync, netV, netE
+        return netG, netD, netA, netA_sync, netV, netE            ## 初始化后，返回网络
 
     def compute_encoder_loss(self, input_img, real_image, spectrogram, labels):
         G_losses = {}
@@ -371,7 +371,7 @@ class AvModel(torch.nn.Module):
             id_feature, id_scores = self.netA(id_mel)
         return id_feature, id_scores
 
-    def encode_identity_feature(self, input_img):
+    def encode_identity_feature(self, input_img):                 ## 使用netV对identity image进行encoder
 
         input_img = input_img.view(-1, self.opt.output_nc, self.opt.crop_size, self.opt.crop_size)
         if not self.opt.isTrain or self.opt.fix_netV:
@@ -477,19 +477,19 @@ class AvModel(torch.nn.Module):
         sel_id_feature.append(self.select_frames(id_feature[0]))
         sel_id_feature.append(self.select_frames(id_feature[1]))
 
-        V_noid_ref_feature = self.encode_ref_noid(input_img)
+        V_noid_ref_feature = self.encode_ref_noid(input_img)                         ### 这两行代码表示从input_img即identity中提取头部pose，而不是pose source
         V_headpose_ref_feature = self.netE.to_headpose(V_noid_ref_feature)
 
         ref_merge_feature_a = self.select_frames(self.merge_mouthpose(A_mouth_feature, V_headpose_ref_feature))
         fake_image_ref_pose_a, _ = self.generate_fake(sel_id_feature, ref_merge_feature_a)
-        if self.opt.driving_pose:
+        if self.opt.driving_pose:                                                   ## 这个条件说明，如果opt.driving_pose为true，则从driving_pose_frames中获取head pose
             V_noid_driving_feature = self.encode_noid_feature(driving_pose_frames)
             V_headpose_feature = self.netE.to_headpose(V_noid_driving_feature)
-            driven_merge_feature_a = self.merge_mouthpose(A_mouth_feature, V_headpose_feature)
+            driven_merge_feature_a = self.merge_mouthpose(A_mouth_feature, V_headpose_feature)   ## 将两个feature转为embedding后，cat成融合特征
             sel_driven_pose_feature_a = self.select_frames(driven_merge_feature_a)
-            fake_image_pose_driven_a, _ = self.generate_fake(sel_id_feature, sel_driven_pose_feature_a)
+            fake_image_pose_driven_a, _ = self.generate_fake(sel_id_feature, sel_driven_pose_feature_a)   ## 使用融合特征生成fake img
 
-        return fake_image_ref_pose_a, fake_image_pose_driven_a
+        return fake_image_ref_pose_a, fake_image_pose_driven_a    ## 返回两个， 一个没用使用pose source，一个使用了
 
     def compute_generator_loss(self, input_img, real_image, augmented, spectrogram,
                                netD, labels, no_ganFeat_loss=False, no_vgg_loss=False, lambda_D=1):
