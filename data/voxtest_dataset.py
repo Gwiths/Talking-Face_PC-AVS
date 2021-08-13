@@ -56,7 +56,7 @@ class VOXTestDataset(BaseDataset):
 
     def initialize(self, opt):
         self.opt = opt
-        self.path_label = opt.path_label
+        self.path_label = opt.path_label                          ## 将prepared的数据的路径文件csv读取出来，八个数据为一行，也即八个为一个path_label。由inference.py初始化opt.label
         self.clip_len = opt.clip_len
         self.frame_interval = opt.frame_interval
         self.num_clips = opt.num_clips
